@@ -4,6 +4,7 @@ import psycopg2
 from psycopg2 import sql
 import sqlparse
 import os
+import sql_formater
 
 app = Flask(__name__)
 CORS(app)
@@ -33,9 +34,9 @@ def execute_query():
         cursor = conn.cursor()
         
         # Verificar se é uma query SELECT
-        first_word = query.split()[0].upper()
-        if first_word != 'SELECT' and first_word != 'WITH':
-            return jsonify({'error': 'Apenas queries SELECT são permitidas'}), 400
+        #first_word = query.split()[0].upper()
+        #if first_word != 'SELECT' and first_word != 'WITH':
+        #    return jsonify({'error': 'Apenas queries SELECT são permitidas'}), 400
         
         cursor.execute(query)
         
@@ -129,17 +130,9 @@ def format_sql():
     data = request.get_json()
     query = data.get('query', '').strip()
 
-    parts = query.split(',')
-    formated = '\n,'.join(parts)
-
-    parts = query.split('SELECT')
-    formated = 'SELECT\n'.join(parts)
-
-    parts = query.split('FROM')
-    formated = '\nFROM'.join(parts)
-
+    formated = sql_formater.format_sql( query )
+    
     return jsonify(formated)
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
