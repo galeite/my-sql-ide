@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: sql_ide
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - sql-ide-network
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/sql_ide
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+    networks:
+      - sql-ide-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_URL=http://localhost:5000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - sql-ide-network
+
+volumes:
+  postgres_data:
+
+networks:
+  sql-ide-network:
+    driver: bridge
